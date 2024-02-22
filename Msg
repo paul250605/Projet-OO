@@ -1,0 +1,249 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+struct Client {
+	
+	string prenom_nom ;
+	char sexe ;
+	string pseudo ;
+	vector < string > personne_appelle ;
+	vector < string > personne_appellant ;
+
+} ;
+
+typedef vector< Client > System ;
+
+void add ( System& network , string prenom_nom , char sexe , string pseudo ) 
+
+{
+	
+	size_t nombre_de_client (network.size()) ;	
+	
+	for ( size_t i (0) ; i < nombre_de_client ; ++i ) 
+	
+	{
+		
+		if ( network[i].pseudo == pseudo) {
+		
+			cout << "ERREUR: pseudo  \"" << pseudo << "\"  déjà présent" << endl;
+			
+			return ; // * return dans fonction void necessaire comme condition d'arret 
+		
+		}	
+	
+	}
+		
+	if ( (sexe != 'M') and ( sexe != 'F' ) and ( sexe != 'X' ) ) 
+	
+	{
+		
+		cout << "ERREUR: genre '" << sexe << "' non valide" << endl ;
+	
+		return; // *
+	
+	}		
+	
+	Client personne = { prenom_nom , sexe , pseudo } ;
+	
+	network.push_back ( personne ) ;
+	 
+	if ( sexe == 'M' ) {
+	
+		cout << "Nouveau client : " ;
+	
+	} else if ( sexe == 'F' ) {
+	
+			cout << "Nouvelle cliente : " ;
+			
+			} else {
+			
+			   cout << "Nouveau/Nouvelle client(e) :" ;
+			
+			  }
+	
+	cout << prenom_nom << " - " << pseudo << endl;
+
+}
+
+void chat ( System & network , int numero_client , string pseudo ) // numero client correspond à la position du client appellant dans le network
+
+{
+	
+	if ( network.size() <= numero_client  ) // test cas limite, numero client n'appartenant pas au network
+	
+	{
+	
+	cout<< "Donnée erronée: " << endl;
+	cout << " ==> ERREUR : NUMERO CLIENT N'APPARTENANT PAS AU NETWORK" << endl;
+			
+	return; // *
+	
+	}
+	
+	cout << network[numero_client].prenom_nom << " contacte " << pseudo << endl; 
+	
+	if ( network[numero_client].pseudo == pseudo) // test cas limite, personne s'envoyant un messaage à lui meme 
+	
+	{
+	
+	cout << " ==> ERREUR : COMMUNICATION IMPOSSIBLE ";
+	cout << "( envoie message à soi-meme ) " << endl;
+			
+	return; // * 
+	
+	}
+	
+	for ( auto appelle : network[numero_client].personne_appelle ) 
+	
+	{
+		
+		if ( appelle==pseudo ) 
+		
+		{
+			
+			cout << " ==> ERREUR : APPEL DEJA FAIT" << endl;
+			
+			return ; // *
+		
+		}
+	
+	}
+	
+	for ( auto appellant : network[numero_client].personne_appellant) 
+	
+	{
+		
+		if ( appellant==pseudo ) 
+		
+		{
+		
+			cout << " ==> ERREUR : COMMUNICATION DEJA EXISTANTE" << endl;
+			
+			return ;
+		
+		}
+		
+	}
+	
+	for(auto& client : network)
+	
+	{
+		
+		if (client.pseudo==pseudo)
+		
+		{
+			
+			cout << " ==> OK ("<< client.prenom_nom << ")" << endl;
+			
+			network[numero_client].personne_appelle.push_back(pseudo);
+			client.personne_appellant.push_back(network[numero_client].pseudo);
+			
+			return; // *
+		
+		}
+	}
+	
+	cout << " ==> ERREUR : PAS DANS LE RESEAU" << endl; 
+	
+}
+
+string nom_prenom_pseudo (System const& network, string pseudo ) // fonction cherchant le prenom_nom d'un utilisateur à partir de son pseudo
+																// nécessaire pour la sortie de la fonction state 
+{
+	
+	for ( auto const& client : network )
+	
+	{
+		if (client.pseudo==pseudo)
+		
+		{
+		
+			return client.prenom_nom;
+		
+		}
+
+	}
+	
+	return " "; // " " vide necessaire pour le retour de la fonction ( string ) 
+
+}
+
+void state ( System const& network ) 
+
+{
+	
+	if ( network.size()==0 ) // test cas limite, network vide 
+	
+	{
+	
+	cout << "Base de donnée vide: network sans utilisateur "<< endl ;
+	
+	}
+	
+	for (auto const& client : network)
+	
+	{		
+	
+		cout << "Discussions de "<< client.prenom_nom << " :" << endl ;
+		
+		for (auto appele : client.personne_appelle)
+	    
+		{
+		
+			cout << " -> " << appele << " ( " << nom_prenom_pseudo( network, appele) << " ) " << endl;
+		
+		}
+		
+		for (auto appelant : client.personne_appellant)
+		
+		{
+		
+			cout << " <- " << appelant << " (" << nom_prenom_pseudo( network, appelant) << ")" << endl;
+		
+		}
+		
+		if  ( (client.personne_appelle.size()==0) and ( client.personne_appellant.size()==0 ) ) 
+		// test cas limite, si le client n'a aucune discussions 
+		
+		{
+		
+			cout << " <-> "  <<client.prenom_nom << " n'a aucune disscusion. " << endl;
+		
+		}
+		
+	}
+}	
+
+// ==============    main    ==============
+
+int main()
+{
+  System network;
+  
+  add(network, "Paul Hice"        , 'M', "interPaul");
+  add(network, "Sylva Froid"      , 'F', "sylv21"   );
+  add(network, "Melusine Titgoute", 'F', "kerrig@n" );
+  add(network, "Bob Razowsky"     , 'X', "sylv21"   ); // échec
+  add(network, "Bob Razowsky"     , 'Y', "bobichon" ); // échec
+  add(network, "Bob Razowsky"     , 'X', "bobichon" );
+  
+  cout << endl;
+  
+  chat(network, 0, "serv@l"   );
+  chat(network, 0, "sylv21"   );
+  chat(network, 0, "kerrig@n" );
+  chat(network, 0, "kerrig@n" );
+  chat(network, 1, "interPaul");
+  chat(network, 2, "sylv21"   );
+  chat(network, 2, "bobichon" );
+  
+  
+  cout << endl;
+  
+  state(network);
+
+  return 0;
+}
